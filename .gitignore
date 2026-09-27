@@ -1,0 +1,41 @@
+# ===== IDE / 编辑器 =====
+*.iml
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+# 机器相关：记录本机设备/部署选择，与代码无关
+/.idea/deploymentTargetSelector.xml
+/.idea/deviceManager.xml
+/.idea/deploymentTargetDropDown.xml
+/.idea/
+# ===== 操作系统 =====
+.DS_Store
+
+# ===== 构建缓存 =====
+.gradle
+/build
+/captures
+.externalNativeBuild
+.cxx
+# Kotlin 2.x 编译器会话缓存
+.kotlin/
+
+# ===== 构建产物 =====
+*.apk
+*.aab
+*.ap_
+*.dex
+*.hprof
+app/release/
+
+# ===== 本地配置 =====
+local.properties
+
+# ===== 签名密钥（严禁提交）=====
+*.jks
+*.keystore
+keystore.properties
+signing.properties
