@@ -9,7 +9,9 @@ data class Transaction(
     val rawText: String,               // 原始通知全文
     val timestamp: Long = System.currentTimeMillis(),
     val notificationId: Int? = null,   // 通知 ID，用于防重复
-    val note: String = ""              // 用户备注
+    val note: String = "",              // 用户备注
+    val orderNo: String? = null         // 账单导入的订单号(交易单号/交易订单号)；
+                                        // 通知监听写入的行保持 null
 ) {
     companion object {
         const val SOURCE_WECHAT = "微信"

@@ -2,7 +2,6 @@ package com.example.myapplication
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
@@ -37,12 +36,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.data.DatabaseHelper
 import com.example.myapplication.forgotpassword.ForgotPasswordScreen
 import com.example.myapplication.login.LoginScreen
+import com.example.myapplication.notification.AutoStartDestination
+import com.example.myapplication.notification.AutoStartLauncher
 import com.example.myapplication.notification.KeepAliveService
 import com.example.myapplication.signup.SignUpScreen
 import com.example.myapplication.ui.home.HomeScreen
 import com.example.myapplication.ui.home.HomeViewModel
 import com.example.myapplication.ui.navigation.BottomNavBar
 import com.example.myapplication.ui.navigation.BottomTab
+import com.example.myapplication.ui.profile.ImportViewModel
 import com.example.myapplication.ui.profile.ProfileScreen
 import com.example.myapplication.ui.records.RecordsScreen
 import com.example.myapplication.ui.theme.MyApplicationTheme
@@ -207,10 +209,23 @@ class MainActivity : ComponentActivity() {
                                     HomeScreen(viewModel = homeViewModel)
                                 }
                                 BottomTab.RECORDS -> RecordsScreen(db = db)
-                                BottomTab.PROFILE -> ProfileScreen(
-                                    isLoggedIn = false,
-                                    onNavigateToLogin = { authScreen = Screen.LOGIN }
-                                )
+                                BottomTab.PROFILE -> {
+                                    val importFactory = remember {
+                                        object : ViewModelProvider.Factory {
+                                            @Suppress("UNCHECKED_CAST")
+                                            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                                                return ImportViewModel(db, applicationContext) as T
+                                            }
+                                        }
+                                    }
+                                    val importViewModel: ImportViewModel =
+                                        viewModel(factory = importFactory)
+                                    ProfileScreen(
+                                        importViewModel = importViewModel,
+                                        isLoggedIn = false,
+                                        onNavigateToLogin = { authScreen = Screen.LOGIN }
+                                    )
+                                }
                             }
                         }
                     }
@@ -228,14 +243,9 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun openAppBatterySettings() {
-        try {
-            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                data = Uri.fromParts("package", packageName, null)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            startActivity(intent)
-        } catch (e: Exception) {
-            Log.e(TAG, "无法打开应用详情", e)
+        // 统一的实现放在 AutoStartLauncher, 避免和 ProfileScreen 各写一份
+        if (AutoStartLauncher.openAppDetails(this) == AutoStartDestination.FAILED) {
+            Log.e(TAG, "无法打开应用详情")
         }
     }
 }
@@ -325,7 +335,8 @@ private fun getBatteryGuideText(isOppo: Boolean, isXiaomi: Boolean, isHuawei: Bo
             appendLine("→ 关闭「后台冻结」和「深度睡眠」")
             appendLine()
             appendLine("③ 开启自启动")
-            appendLine("「设置 → 应用管理 → 应用列表」→ 本 App → 自启动")
+            appendLine("回到「我的」→ 点「自启动管理」直达系统页面")
+            appendLine("（系统不提供状态查询，请自行确认已开启）")
             appendLine()
             appendLine("④ 锁定后台任务")
             appendLine("最近任务 → 下拉 App 卡片 → 🔒 锁定")
@@ -339,7 +350,8 @@ private fun getBatteryGuideText(isOppo: Boolean, isXiaomi: Boolean, isHuawei: Bo
             appendLine("→ 省电策略 → 选择「无限制」")
             appendLine()
             appendLine("② 开启自启动")
-            appendLine("「设置 → 应用 → 应用管理 → 自启动 → 开启」")
+            appendLine("回到「我的」→ 点「自启动管理」直达系统页面")
+            appendLine("（系统不提供状态查询，请自行确认已开启）")
         }.trimEnd()
     }
     if (isHuawei) {
@@ -350,8 +362,9 @@ private fun getBatteryGuideText(isOppo: Boolean, isXiaomi: Boolean, isHuawei: Bo
             appendLine("→ 耗电 → 选择「无限制」")
             appendLine()
             appendLine("② 关闭自动管理")
-            appendLine("「设置 → 应用 → 应用启动管理 → 关闭自动管理」")
-            appendLine("→ 开启所有开关")
+            appendLine("回到「我的」→ 点「自启动管理」直达系统页面")
+            appendLine("→ 关闭「自动管理」并开启所有开关")
+            appendLine("（系统不提供状态查询，请自行确认已开启）")
         }.trimEnd()
     }
     return buildString {
