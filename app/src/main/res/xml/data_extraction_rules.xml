@@ -1,19 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?><!--
-   Sample data extraction rules file; uncomment and customize as necessary.
-   See https://developer.android.com/about/versions/12/backup-restore#xml-changes
-   for details.
+   数据提取规则(API 31+ 的云备份 / 换机传输)。
+
+   账单库与认证 token 一律排除:
+   - databases/accounting.db —— 明文账单库, 含金额、商户名、订单号, 不应离开设备;
+   - files/datastore/auth_prefs.preferences_pb —— 其密文由 Android Keystore 密钥加密,
+     而 **Keystore 密钥本身不参与备份**, 备份恢复后必然解不开(表现为登录静默失效),
+     因此备份它对用户只有坏处。
+
+   只写 exclude 不写 include: 未列出的内容仍走默认策略, 这里仅把敏感项摘出去。
 -->
 <data-extraction-rules>
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
+        <exclude domain="database" path="accounting.db" />
+        <exclude domain="file" path="datastore/auth_prefs.preferences_pb" />
     </cloud-backup>
-    <!--
     <device-transfer>
-        <include .../>
-        <exclude .../>
+        <exclude domain="database" path="accounting.db" />
+        <exclude domain="file" path="datastore/auth_prefs.preferences_pb" />
     </device-transfer>
-    -->
 </data-extraction-rules>

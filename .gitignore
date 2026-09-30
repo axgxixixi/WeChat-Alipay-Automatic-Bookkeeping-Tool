@@ -39,3 +39,17 @@ local.properties
 *.keystore
 keystore.properties
 signing.properties
+
+# ===== 个人账单数据（严禁提交）=====
+# 微信 / 支付宝导出的真实账单: 含商户名、交易对方、订单号、账号昵称
+微信支付账单*
+支付宝交易明细*
+# 仓库根目录不允许出现任何表格文件(导出账单的常见落点)
+/*.xlsx
+/*.xls
+/*.csv
+# 导入功能调试用的临时样本目录
+.tmp_bills/
+
+# 注意: app/src/test/resources/bills/ 下是**已匿名化**的固定测试样本, 必须入库。
+# 因此不要添加 *.xlsx / *.csv 这类全局规则, 否则会把测试样本一并忽略掉。

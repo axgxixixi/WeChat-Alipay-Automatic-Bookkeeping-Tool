@@ -1,10 +1,10 @@
 package com.example.myapplication.ui.profile
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.Lifecycle
@@ -43,8 +43,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.app.NotificationManagerCompat
-import com.example.myapplication.notification.AutoStartDestination
-import com.example.myapplication.notification.AutoStartLauncher
 
 @Composable
 fun ProfileScreen(
@@ -198,21 +196,15 @@ fun ProfileScreen(
                     } else {
                         MaterialTheme.colorScheme.error
                     },
-                    // 原来这里内联了一份「应用详情页」intent, 现统一走 AutoStartLauncher
-                    onClick = { AutoStartLauncher.openAppDetails(context) }
-                )
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-                // 自启动: Android 读不到该状态, 所以这里不显示"已开启/未开启",
-                // 只给出「去开启」的动作暗示, 并在下方说明里讲清无法检测。
-                NotificationPermissionItem(
-                    title = "自启动管理",
-                    status = "去开启",
-                    statusColor = MaterialTheme.colorScheme.primary,
+                    // 厂商自启动页是 ROM 私有组件, 既无公开 API 也随 OTA 变化,
+                    // 因此只提供系统标准的「应用详情」入口, 其余开关由用户在该页自行查找。
                     onClick = {
-                        val destination = AutoStartLauncher.openAutoStart(context)
-                        autoStartFallbackMessage(destination)?.let {
-                            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
-                        }
+                        context.startActivity(
+                            Intent(
+                                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                Uri.fromParts("package", context.packageName, null)
+                            )
+                        )
                     }
                 )
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
@@ -229,13 +221,13 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // 说明: 厂商自己的开关系统接口读不到, 这里必须讲清楚 ——
-            // 否则用户会以为「自启动管理」点一下就已经帮他把开关打开了。
+            // 说明: 厂商自己的开关(自启动 / 后台冻结)系统接口读不到, 这里必须讲清楚 ——
+            // 否则用户会以为点了「系统电池优化」就已经把后台限制全部解除了。
             Text(
                 text = "说明：「系统电池优化」只代表 Android 标准设置。" +
                     "部分手机（小米 / 华为 / OPPO / vivo 等）另有独立的「自启动」「后台冻结」开关，" +
-                    "Android 没有提供查询或申请该权限的接口，因此本应用无法检测它是否已开启 —— " +
-                    "上方「自启动管理」只负责跳到系统页面，请跳过去后自行确认已允许本应用自启动，" +
+                    "Android 没有提供查询或申请该权限的接口，本应用既无法检测、也无法直接打开该页面，" +
+                    "需要你自行到「设置 → 应用管理 → 本应用」里允许自启动并关闭后台冻结，" +
                     "否则后台监听可能仍会失效。",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -314,27 +306,6 @@ private fun NotificationPermissionItem(
         )
     }
 }
-
-/**
- * 没跳到厂商自启动页时给用户一句如实的交代。
- *
- * 返回 null 表示跳转成功、无需提示 —— 不能让用户以为自己到了正确的地方。
- */
-private fun autoStartFallbackMessage(destination: AutoStartDestination): String? =
-    when (destination) {
-        AutoStartDestination.AUTO_START_PAGE -> null
-
-        AutoStartDestination.APP_DETAILS ->
-            "没找到本机系统的自启动页面，已跳到应用详情页，" +
-                "请在这里手动查找「自启动」或「后台运行」开关"
-
-        AutoStartDestination.SYSTEM_SETTINGS ->
-            "没找到自启动页面，已跳到系统设置，" +
-                "请手动查找「自启动」或「后台运行」开关"
-
-        AutoStartDestination.FAILED ->
-            "无法打开系统设置，请手动到「设置 → 应用管理 → 本应用」里允许自启动"
-    }
 
 @Composable
 private fun SettingsItem(

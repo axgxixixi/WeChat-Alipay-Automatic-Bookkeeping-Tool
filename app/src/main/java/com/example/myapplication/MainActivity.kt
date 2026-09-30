@@ -2,6 +2,7 @@ package com.example.myapplication
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
@@ -36,8 +37,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.data.DatabaseHelper
 import com.example.myapplication.forgotpassword.ForgotPasswordScreen
 import com.example.myapplication.login.LoginScreen
-import com.example.myapplication.notification.AutoStartDestination
-import com.example.myapplication.notification.AutoStartLauncher
 import com.example.myapplication.notification.KeepAliveService
 import com.example.myapplication.signup.SignUpScreen
 import com.example.myapplication.ui.home.HomeScreen
@@ -243,9 +242,15 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun openAppBatterySettings() {
-        // 统一的实现放在 AutoStartLauncher, 避免和 ProfileScreen 各写一份
-        if (AutoStartLauncher.openAppDetails(this) == AutoStartDestination.FAILED) {
-            Log.e(TAG, "无法打开应用详情")
+        // 只提供系统标准的「应用详情」入口。厂商自启动页是私有组件, 各 ROM 包名/类名
+        // 互不相同且随 OTA 变化, 硬编码跳转命中率低, 因此不再内置。
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.fromParts("package", packageName, null)
+        }
+        try {
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "无法打开应用详情", e)
         }
     }
 }
@@ -335,7 +340,7 @@ private fun getBatteryGuideText(isOppo: Boolean, isXiaomi: Boolean, isHuawei: Bo
             appendLine("→ 关闭「后台冻结」和「深度睡眠」")
             appendLine()
             appendLine("③ 开启自启动")
-            appendLine("回到「我的」→ 点「自启动管理」直达系统页面")
+            appendLine("「设置 → 应用管理 → 本应用 → 自启动」")
             appendLine("（系统不提供状态查询，请自行确认已开启）")
             appendLine()
             appendLine("④ 锁定后台任务")
@@ -350,7 +355,7 @@ private fun getBatteryGuideText(isOppo: Boolean, isXiaomi: Boolean, isHuawei: Bo
             appendLine("→ 省电策略 → 选择「无限制」")
             appendLine()
             appendLine("② 开启自启动")
-            appendLine("回到「我的」→ 点「自启动管理」直达系统页面")
+            appendLine("「设置 → 应用管理 → 本应用 → 自启动」")
             appendLine("（系统不提供状态查询，请自行确认已开启）")
         }.trimEnd()
     }
@@ -362,7 +367,7 @@ private fun getBatteryGuideText(isOppo: Boolean, isXiaomi: Boolean, isHuawei: Bo
             appendLine("→ 耗电 → 选择「无限制」")
             appendLine()
             appendLine("② 关闭自动管理")
-            appendLine("回到「我的」→ 点「自启动管理」直达系统页面")
+            appendLine("「设置 → 应用管理 → 本应用 → 自启动管理」")
             appendLine("→ 关闭「自动管理」并开启所有开关")
             appendLine("（系统不提供状态查询，请自行确认已开启）")
         }.trimEnd()
